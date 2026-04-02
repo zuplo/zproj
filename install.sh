@@ -19,12 +19,22 @@ case "$OS" in
   *) echo "Unsupported OS: $OS"; exit 1 ;;
 esac
 
+# Get a GitHub token for API auth if not already set
+if [ -z "$GITHUB_TOKEN" ] && command -v gh >/dev/null 2>&1; then
+  GITHUB_TOKEN=$(gh auth token 2>/dev/null || true)
+fi
+
+AUTH_HEADER=""
+if [ -n "$GITHUB_TOKEN" ]; then
+  AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
+fi
+
 # Get latest release tag
-LATEST=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+LATEST=$(curl -sL ${AUTH_HEADER:+-H "$AUTH_HEADER"} "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
 
 if [ -z "$LATEST" ]; then
-  echo "Error: could not determine latest release. GitHub API may be rate-limited."
-  echo "Try setting GITHUB_TOKEN or run: gh release download --repo ${REPO} --pattern '*${OS}_${ARCH}*'"
+  echo "Error: could not determine latest release."
+  echo "GitHub API may be rate-limited. Install gh CLI (https://cli.github.com) and run 'gh auth login', then retry."
   exit 1
 fi
 
