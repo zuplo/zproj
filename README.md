@@ -24,7 +24,7 @@ tar -xzf /tmp/zproj_*_darwin_arm64.tar.gz -C /usr/local/bin
 mkdir my-projects && cd my-projects
 zproj init
 
-# Edit zproj.config.json to add your repos, then run init again
+# Edit zproj.config.jsonc to add your repos, then run init again
 zproj init
 
 # Create a workspace (this is the default command)
@@ -36,7 +36,7 @@ code my-feature/my-feature.code-workspace
 
 ## Configuration
 
-`zproj.config.json` defines your repos and groups:
+`zproj.config.jsonc` defines your repos and groups:
 
 ```jsonc
 {
@@ -140,7 +140,7 @@ zproj update
 
 ```
 my-projects/
-├── zproj.config.json
+├── zproj.config.jsonc
 ├── .main/                     # Main repos (always on default branch)
 │   ├── my-app/
 │   └── shared-lib/

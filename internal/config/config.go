@@ -10,7 +10,10 @@ import (
 	"strings"
 )
 
-const ConfigFile = "zproj.config.json"
+const (
+	ConfigFile    = "zproj.config.jsonc"
+	ConfigFileAlt = "zproj.config.json"
+)
 
 type Config struct {
 	Groups    map[string]Group `json:"groups"`
@@ -201,7 +204,19 @@ func stripJSONComments(data []byte) []byte {
 	return lineCommentRe.ReplaceAll(data, nil)
 }
 
-// FindRoot walks up from startDir looking for zproj.config.json.
+// FindConfigFile returns the config file path within a directory,
+// preferring .jsonc over .json.
+func FindConfigFile(dir string) (string, bool) {
+	for _, name := range []string{ConfigFile, ConfigFileAlt} {
+		path := filepath.Join(dir, name)
+		if _, err := os.Stat(path); err == nil {
+			return path, true
+		}
+	}
+	return "", false
+}
+
+// FindRoot walks up from startDir looking for zproj.config.jsonc or .json.
 // Returns the directory containing it.
 func FindRoot(startDir string) (string, error) {
 	dir, err := filepath.Abs(startDir)
@@ -209,12 +224,12 @@ func FindRoot(startDir string) (string, error) {
 		return "", err
 	}
 	for {
-		if _, err := os.Stat(filepath.Join(dir, ConfigFile)); err == nil {
+		if _, found := FindConfigFile(dir); found {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", fmt.Errorf("could not find %s in any parent directory", ConfigFile)
+			return "", fmt.Errorf("could not find %s (or %s) in any parent directory", ConfigFile, ConfigFileAlt)
 		}
 		dir = parent
 	}

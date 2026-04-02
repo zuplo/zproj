@@ -69,7 +69,8 @@ func initConfig() {
 	}
 	rootDir = root
 
-	c, err := config.Load(root + "/" + config.ConfigFile)
+	cfgPath, _ := config.FindConfigFile(root)
+	c, err := config.Load(cfgPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
 		os.Exit(1)
