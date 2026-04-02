@@ -31,5 +31,5 @@ changelog:
 
 release:
   github:
-    owner: ntotten
+    owner: zuplo
     name: zproj

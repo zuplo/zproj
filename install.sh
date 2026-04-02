@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO="ntotten/zproj"
+REPO="zuplo/zproj"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 # Detect OS and architecture
