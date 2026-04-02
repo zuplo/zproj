@@ -24,7 +24,7 @@ tar -xzf /tmp/zproj_*_darwin_arm64.tar.gz -C /usr/local/bin
 mkdir my-projects && cd my-projects
 zproj init
 
-# Edit zproj.config.jsonc to add your repos, then run init again
+# Edit zproj.yaml to add your repos, then run init again
 zproj init
 
 # Create a workspace (this is the default command)
@@ -36,34 +36,29 @@ code my-feature/my-feature.code-workspace
 
 ## Configuration
 
-`zproj.config.jsonc` defines your repos and groups:
+`zproj.yaml` defines your repos and groups:
 
-```jsonc
-{
-  "groups": {
-    "default": {
-      "repos": [
-        // Just a URL — name and branch are inferred
-        "git@github.com:your-org/my-app.git",
-        "git@github.com:your-org/shared-lib.git",
+```yaml
+groups:
+  default:
+    repos:
+      # Just a URL — name and branch are inferred
+      - git@github.com:your-org/my-app.git
+      - git@github.com:your-org/shared-lib.git
 
-        // Or use an object to override name/branch
-        { "url": "git@github.com:your-org/api.git", "branch": "develop" }
-      ]
-    },
-    "backend": {
-      "repos": [
-        "git@github.com:your-org/api-service.git",
-        "git@github.com:your-org/worker.git"
-      ]
-    }
-  },
-  "templates": {
-    "variables": {
-      "ORG": "your-org"
-    }
-  }
-}
+      # Or use an object to override name/branch
+      - url: git@github.com:your-org/api.git
+        branch: develop
+
+  backend:
+    repos:
+      - git@github.com:your-org/api-service.git
+      - git@github.com:your-org/worker.git
+
+# Optional: variables available in .template/ files
+templates:
+  variables:
+    ORG: your-org
 ```
 
 - **Repo URL string**: name is derived from the URL (`your-org/my-app.git` -> `my-app`), branch defaults to `main`
@@ -140,7 +135,7 @@ zproj update
 
 ```
 my-projects/
-├── zproj.config.jsonc
+├── zproj.yaml
 ├── .main/                     # Main repos (always on default branch)
 │   ├── my-app/
 │   └── shared-lib/

@@ -28,38 +28,31 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-const exampleConfig = `{
-  // Each group contains a set of repos that are cloned and managed together.
-  // The "default" group lives at the root; named groups get their own [folder].
-  "groups": {
-    "default": {
-      "repos": [
-        // Simplest form: just a git URL. Name and branch are inferred.
-        // Name is derived from the URL (e.g. "my-app"), branch defaults to "main".
-        "git@github.com:your-org/my-app.git",
-        "git@github.com:your-org/shared-lib.git"
+const exampleConfig = `# Each group contains a set of repos that are cloned and managed together.
+# The "default" group lives at the root; named groups get their own [folder].
+groups:
+  default:
+    repos:
+      # Simplest form: just a git URL.
+      # Name is derived from the URL (e.g. "my-app"), branch defaults to "main".
+      - git@github.com:your-org/my-app.git
+      - git@github.com:your-org/shared-lib.git
 
-        // Object form lets you override name or branch:
-        // { "url": "git@github.com:your-org/api.git", "name": "api", "branch": "develop" }
-      ]
-    }
+      # Object form lets you override name or branch:
+      # - url: git@github.com:your-org/api.git
+      #   name: api
+      #   branch: develop
 
-    // Add more groups to organize repos separately:
-    // "backend": {
-    //   "repos": [
-    //     "git@github.com:your-org/api-service.git",
-    //     "git@github.com:your-org/worker.git"
-    //   ]
-    // }
-  }
+  # Add more groups to organize repos separately:
+  # backend:
+  #   repos:
+  #     - git@github.com:your-org/api-service.git
+  #     - git@github.com:your-org/worker.git
 
-  // Optional: variables available in .template/ files
-  // "templates": {
-  //   "variables": {
-  //     "ORG": "your-org"
-  //   }
-  // }
-}
+# Optional: variables available in .template/ files
+# templates:
+#   variables:
+#     ORG: your-org
 `
 
 func runInitInteractive() error {

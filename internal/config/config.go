@@ -1,39 +1,35 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
-const (
-	ConfigFile    = "zproj.config.jsonc"
-	ConfigFileAlt = "zproj.config.json"
-)
+const ConfigFile = "zproj.yaml"
 
 type Config struct {
-	Groups    map[string]Group `json:"groups"`
-	Templates *Templates       `json:"templates,omitempty"`
+	Groups    map[string]Group `yaml:"groups"`
+	Templates *Templates       `yaml:"templates,omitempty"`
 }
 
 type Group struct {
-	Repos []Repo `json:"-"`
-
-	RawRepos []json.RawMessage `json:"repos"`
+	Repos []Repo `yaml:"-"`
 }
 
 type Repo struct {
-	URL    string `json:"url"`
-	Name   string `json:"name,omitempty"`
-	Branch string `json:"branch,omitempty"`
+	URL    string `yaml:"url"`
+	Name   string `yaml:"name,omitempty"`
+	Branch string `yaml:"branch,omitempty"`
 }
 
 type Templates struct {
-	Variables map[string]string `json:"variables,omitempty"`
+	Variables map[string]string `yaml:"variables,omitempty"`
 }
 
 // RepoName returns the resolved name for a repo.
@@ -54,37 +50,36 @@ func (r Repo) RepoBranch() string {
 	return "main"
 }
 
-func repoNameFromURL(url string) string {
-	// Handle both SSH and HTTPS URLs
-	// git@github.com:org/repo.git -> repo
-	// https://github.com/org/repo.git -> repo
-	base := filepath.Base(url)
+func repoNameFromURL(u string) string {
+	base := filepath.Base(u)
 	return strings.TrimSuffix(base, ".git")
 }
 
-func (g *Group) UnmarshalJSON(data []byte) error {
-	type rawGroup struct {
-		Repos []json.RawMessage `json:"repos"`
+// UnmarshalYAML supports repos as either plain strings or objects.
+func (g *Group) UnmarshalYAML(value *yaml.Node) error {
+	// Expect a mapping with a "repos" key
+	var raw struct {
+		Repos []yaml.Node `yaml:"repos"`
 	}
-	var rg rawGroup
-	if err := json.Unmarshal(data, &rg); err != nil {
+	if err := value.Decode(&raw); err != nil {
 		return err
 	}
 
-	for _, raw := range rg.Repos {
+	for _, node := range raw.Repos {
 		var repo Repo
-		// Try string first (plain URL)
-		var s string
-		if err := json.Unmarshal(raw, &s); err == nil {
-			repo = Repo{URL: s}
-		} else {
-			// Try object
-			if err := json.Unmarshal(raw, &repo); err != nil {
-				return fmt.Errorf("invalid repo entry: %s", string(raw))
+		switch node.Kind {
+		case yaml.ScalarNode:
+			// Plain string URL
+			repo = Repo{URL: node.Value}
+		case yaml.MappingNode:
+			if err := node.Decode(&repo); err != nil {
+				return fmt.Errorf("invalid repo entry at line %d: %w", node.Line, err)
 			}
+		default:
+			return fmt.Errorf("invalid repo entry at line %d: expected string or mapping", node.Line)
 		}
 		if repo.URL == "" {
-			return fmt.Errorf("repo entry missing url: %s", string(raw))
+			return fmt.Errorf("repo entry missing url at line %d", node.Line)
 		}
 		g.Repos = append(g.Repos, repo)
 	}
@@ -97,12 +92,10 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
-	// Strip // comments (JSONC support for the example config)
-	data = stripJSONComments(data)
 
 	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parsing config: %w", err)
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("parsing %s: %w", filepath.Base(path), err)
 	}
 	if err := cfg.Validate(); err != nil {
 		return nil, err
@@ -117,13 +110,10 @@ func (c *Config) Validate() error {
 
 Your %s must have at least one group with repos. Example:
 
-  {
-    "groups": {
-      "default": {
-        "repos": ["git@github.com:org/repo.git"]
-      }
-    }
-  }`, ConfigFile)
+  groups:
+    default:
+      repos:
+        - git@github.com:org/repo.git`, ConfigFile)
 	}
 
 	for groupName, group := range c.Groups {
@@ -131,7 +121,7 @@ Your %s must have at least one group with repos. Example:
 			return fmt.Errorf("config error in group %q: %w", groupName, err)
 		}
 		if len(group.Repos) == 0 {
-			return fmt.Errorf("config error: group %q has no repos\n\nAdd at least one repo URL to the group's \"repos\" array.", groupName)
+			return fmt.Errorf("config error: group %q has no repos\n\nAdd at least one repo URL to the group's repos list.", groupName)
 		}
 
 		seen := make(map[string]bool)
@@ -141,7 +131,7 @@ Your %s must have at least one group with repos. Example:
 			}
 			name := repo.RepoName()
 			if seen[name] {
-				return fmt.Errorf("config error: duplicate repo name %q in group %q\n\nUse the \"name\" field to give one of them a unique name:\n  { \"url\": \"%s\", \"name\": \"%s-2\" }", name, groupName, repo.URL, name)
+				return fmt.Errorf("config error: duplicate repo name %q in group %q\n\nUse the \"name\" field to give one a unique name:\n  - url: %s\n    name: %s-2", name, groupName, repo.URL, name)
 			}
 			seen[name] = true
 		}
@@ -168,7 +158,6 @@ func validateRepo(repo Repo, index int, group string) error {
 		return fmt.Errorf("config error: repo #%d in group %q is missing a URL", index+1, group)
 	}
 
-	// Check for common URL issues
 	if strings.Contains(repoURL, " ") {
 		return fmt.Errorf("config error: repo URL contains spaces in group %q: %q\n\nRepo URLs should not contain spaces.", group, repoURL)
 	}
@@ -189,7 +178,6 @@ Repo URLs should be either:
   HTTPS: https://github.com/org/repo.git`, group, repoURL)
 	}
 
-	// Warn about missing .git suffix (non-fatal, just derive name correctly)
 	name := repo.RepoName()
 	if name == "" {
 		return fmt.Errorf("config error: could not derive repo name from URL %q in group %q\n\nSet an explicit \"name\" field for this repo.", repoURL, group)
@@ -198,25 +186,16 @@ Repo URLs should be either:
 	return nil
 }
 
-var lineCommentRe = regexp.MustCompile(`(?m)^\s*//.*$|//.*$`)
-
-func stripJSONComments(data []byte) []byte {
-	return lineCommentRe.ReplaceAll(data, nil)
-}
-
-// FindConfigFile returns the config file path within a directory,
-// preferring .jsonc over .json.
+// FindConfigFile returns the config file path within a directory.
 func FindConfigFile(dir string) (string, bool) {
-	for _, name := range []string{ConfigFile, ConfigFileAlt} {
-		path := filepath.Join(dir, name)
-		if _, err := os.Stat(path); err == nil {
-			return path, true
-		}
+	path := filepath.Join(dir, ConfigFile)
+	if _, err := os.Stat(path); err == nil {
+		return path, true
 	}
 	return "", false
 }
 
-// FindRoot walks up from startDir looking for zproj.config.jsonc or .json.
+// FindRoot walks up from startDir looking for zproj.yaml.
 // Returns the directory containing it.
 func FindRoot(startDir string) (string, error) {
 	dir, err := filepath.Abs(startDir)
@@ -229,7 +208,7 @@ func FindRoot(startDir string) (string, error) {
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", fmt.Errorf("could not find %s (or %s) in any parent directory", ConfigFile, ConfigFileAlt)
+			return "", fmt.Errorf("could not find %s in any parent directory", ConfigFile)
 		}
 		dir = parent
 	}
