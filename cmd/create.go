@@ -26,7 +26,7 @@ func runCreate(name string) error {
 	}
 	group := resolveGroup()
 	fmt.Printf("Creating project %q in group %q...\n", name, group)
-	if err := project.Create(rootDir, cfg, name, group); err != nil {
+	if err := project.Create(rootDir, cfg, name, group, colorArg); err != nil {
 		return err
 	}
 	fmt.Printf("Project %q created successfully.\n", name)

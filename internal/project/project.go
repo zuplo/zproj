@@ -13,7 +13,7 @@ import (
 )
 
 // Create creates a new project with worktrees for all repos in the group.
-func Create(root string, cfg *config.Config, name, group string) error {
+func Create(root string, cfg *config.Config, name, group, color string) error {
 	grp, ok := cfg.Groups[group]
 	if !ok {
 		return fmt.Errorf("group %q not found in config", group)
@@ -51,7 +51,7 @@ func Create(root string, cfg *config.Config, name, group string) error {
 		return fmt.Errorf("errors creating worktrees:\n%s", strings.Join(errs, "\n"))
 	}
 
-	if err := generateWorkspace(projectDir, name, grp.Repos); err != nil {
+	if err := generateWorkspace(projectDir, name, grp.Repos, color); err != nil {
 		return fmt.Errorf("generating workspace: %w", err)
 	}
 
@@ -118,12 +118,22 @@ type workspaceFolder struct {
 	Path string `json:"path"`
 }
 
-func generateWorkspace(projectDir, name string, repos []config.Repo) error {
+func generateWorkspace(projectDir, name string, repos []config.Repo, color string) error {
 	ws := workspaceFile{
 		Folders: make([]workspaceFolder, len(repos)),
 	}
 	for i, repo := range repos {
 		ws.Folders[i] = workspaceFolder{Path: repo.RepoName()}
+	}
+	if color != "" {
+		ws.Settings = map[string]any{
+			"workbench.colorCustomizations": map[string]string{
+				"titleBar.activeBackground":   color,
+				"titleBar.activeForeground":   "#ffffff",
+				"titleBar.inactiveBackground": color,
+				"titleBar.inactiveForeground": "#cccccc",
+			},
+		}
 	}
 
 	data, err := json.MarshalIndent(ws, "", "  ")

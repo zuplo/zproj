@@ -13,6 +13,7 @@ var (
 	rootDir  string
 	cfg      *config.Config
 	groupArg string
+	colorArg string
 	version  = "dev"
 )
 
@@ -41,6 +42,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&groupArg, "group", "default", "group to operate on")
+	rootCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color for VS Code workspace (e.g. #1e90ff)")
+	createCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color for VS Code workspace (e.g. #1e90ff)")
 }
 
 func initConfig() {
