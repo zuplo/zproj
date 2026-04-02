@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -118,6 +119,41 @@ type workspaceFolder struct {
 	Path string `json:"path"`
 }
 
+// ColorMap maps color names to hex values for VS Code title bar.
+var ColorMap = map[string]string{
+	"red":     "#b91c1c",
+	"orange":  "#c2410c",
+	"yellow":  "#a16207",
+	"green":   "#15803d",
+	"teal":    "#0f766e",
+	"blue":    "#1d4ed8",
+	"indigo":  "#4338ca",
+	"purple":  "#7e22ce",
+	"pink":    "#be185d",
+	"rose":    "#e11d48",
+	"sky":     "#0369a1",
+	"lime":    "#4d7c0f",
+	"cyan":    "#0e7490",
+	"slate":   "#475569",
+}
+
+// ResolveColor maps a color name to its hex value.
+// Returns empty string if not found.
+func ResolveColor(name string) (string, bool) {
+	hex, ok := ColorMap[name]
+	return hex, ok
+}
+
+// ColorNames returns all valid color names sorted.
+func ColorNames() []string {
+	names := make([]string, 0, len(ColorMap))
+	for k := range ColorMap {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return names
+}
+
 func generateWorkspace(projectDir, name string, repos []config.Repo, color string) error {
 	ws := workspaceFile{
 		Folders: make([]workspaceFolder, len(repos)),
@@ -126,11 +162,15 @@ func generateWorkspace(projectDir, name string, repos []config.Repo, color strin
 		ws.Folders[i] = workspaceFolder{Path: repo.RepoName()}
 	}
 	if color != "" {
+		hex, ok := ResolveColor(color)
+		if !ok {
+			return fmt.Errorf("unknown color %q, valid colors: %s", color, strings.Join(ColorNames(), ", "))
+		}
 		ws.Settings = map[string]any{
 			"workbench.colorCustomizations": map[string]string{
-				"titleBar.activeBackground":   color,
+				"titleBar.activeBackground":   hex,
 				"titleBar.activeForeground":   "#ffffff",
-				"titleBar.inactiveBackground": color,
+				"titleBar.inactiveBackground": hex,
 				"titleBar.inactiveForeground": "#cccccc",
 			},
 		}
