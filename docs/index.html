@@ -45,7 +45,7 @@
       font-size: 0.85em;
     }
 
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 32px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
 
     /* BG */
     .bg-glow {
@@ -160,7 +160,7 @@
     .fi p { color: var(--text-dim); font-size: 0.88rem; line-height: 1.55; }
 
     /* Two col */
-    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
+    .two { display: grid; grid-template-columns: 1fr 1.15fr; gap: 80px; align-items: center; }
     @media (max-width: 768px) { .two { grid-template-columns: 1fr; gap: 40px; } }
 
     /* Terminal */
@@ -212,11 +212,13 @@
     .ci span { color: var(--text-dim); font-size: 0.84rem; }
 
     /* Command list */
-    .cmd-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .cmd-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 900px) { .cmd-list { grid-template-columns: 1fr; } }
     .cmd-item {
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: 12px; padding: 24px 28px; transition: border-color 0.15s;
     }
+    .cmd-item.cmd-wide { grid-column: 1 / -1; }
     .cmd-item:hover { border-color: var(--border-light); }
     .cmd-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .cmd-name {
@@ -447,7 +449,7 @@
     </div>
 
     <div class="cmd-list">
-      <div class="cmd-item">
+      <div class="cmd-item cmd-wide">
         <div class="cmd-head">
           <code class="cmd-name">hk [group] [name]</code>
           <span class="cmd-badge">default</span>
@@ -464,7 +466,7 @@
         <p>Create a new <code>hike.yaml</code> config file in the current directory with an annotated example. Prompts before overwriting.</p>
       </div>
 
-      <div class="cmd-item">
+      <div class="cmd-item cmd-wide">
         <div class="cmd-head"><code class="cmd-name">hk sync [-g group]</code></div>
         <p>Clone any missing repos and hard-reset all <code>.hike/</code> repos to the latest <code>origin/HEAD</code>. This is the command to run after adding new repos to your config. Runs all clones in parallel.</p>
         <div class="cmd-warn">Performs <code>git reset --hard</code> on .hike/ repos. Never work directly in .hike/ &mdash; use project worktrees instead.</div>
@@ -480,7 +482,7 @@
         <p>Run <code>git push</code> on every repo in the project. Runs in parallel across all repos.</p>
       </div>
 
-      <div class="cmd-item">
+      <div class="cmd-item cmd-wide">
         <div class="cmd-head"><code class="cmd-name">hk status [project]</code></div>
         <p>Show the branch, dirty state, and ahead/behind status for each repo in the project.</p>
         <div class="cmd-ex"><span class="p">$</span> hk status
