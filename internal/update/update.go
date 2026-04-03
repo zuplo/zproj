@@ -1,9 +1,9 @@
 package update
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,22 +27,28 @@ func BinDir() (string, error) {
 	return filepath.Join(home, binDir), nil
 }
 
+type ghRelease struct {
+	TagName string `json:"tag_name"`
+}
+
 // LatestVersion returns the latest release version tag (e.g. "0.1.0").
 func LatestVersion() (string, error) {
-	if _, err := exec.LookPath("gh"); err != nil {
-		return "", fmt.Errorf("gh CLI not found")
-	}
-
-	var stdout bytes.Buffer
-	cmd := exec.Command("gh", "release", "view", "--repo", repo, "--json", "tagName", "--jq", ".tagName")
-	cmd.Stdout = &stdout
-	cmd.Stderr = nil
-	if err := cmd.Run(); err != nil {
+	resp, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo))
+	if err != nil {
 		return "", fmt.Errorf("failed to check latest release: %w", err)
 	}
+	defer resp.Body.Close()
 
-	tag := strings.TrimSpace(stdout.String())
-	return strings.TrimPrefix(tag, "v"), nil
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("GitHub API returned %d", resp.StatusCode)
+	}
+
+	var release ghRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", fmt.Errorf("parsing release: %w", err)
+	}
+
+	return strings.TrimPrefix(release.TagName, "v"), nil
 }
 
 // SelfUpdate downloads the latest release and replaces the binary in ~/.zproj/bin/.
@@ -65,6 +71,7 @@ func SelfUpdate(currentVersion string) error {
 	}
 
 	archive := fmt.Sprintf("zproj_%s_%s_%s.tar.gz", latest, runtime.GOOS, runtime.GOARCH)
+	url := fmt.Sprintf("https://github.com/%s/releases/download/v%s/%s", repo, latest, archive)
 
 	tmpDir, err := os.MkdirTemp("", "zproj-update-*")
 	if err != nil {
@@ -72,20 +79,30 @@ func SelfUpdate(currentVersion string) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Download using gh CLI (handles private repo auth)
-	cmd := exec.Command("gh", "release", "download", "v"+latest,
-		"--repo", repo,
-		"--pattern", archive,
-		"--dir", tmpDir,
-	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	// Download
+	archivePath := filepath.Join(tmpDir, archive)
+	resp, err := http.Get(url)
+	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("download failed: HTTP %d", resp.StatusCode)
+	}
+
+	f, err := os.Create(archivePath)
+	if err != nil {
+		return err
+	}
+	if _, err := f.ReadFrom(resp.Body); err != nil {
+		f.Close()
+		return fmt.Errorf("download failed: %w", err)
+	}
+	f.Close()
 
 	// Extract
-	tarCmd := exec.Command("tar", "-xzf", filepath.Join(tmpDir, archive), "-C", tmpDir)
+	tarCmd := exec.Command("tar", "-xzf", archivePath, "-C", tmpDir)
 	if err := tarCmd.Run(); err != nil {
 		return fmt.Errorf("extract failed: %w", err)
 	}

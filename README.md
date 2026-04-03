@@ -6,10 +6,14 @@ Create isolated workspaces per feature or task, with all your repos available in
 
 ## Install
 
-Requires the [GitHub CLI](https://cli.github.com/) (`gh`) to be installed and authenticated (`gh auth login`).
+```sh
+curl -fsSL https://raw.githubusercontent.com/zuplo/zproj/main/install.sh | sh
+```
+
+Or as a single command:
 
 ```sh
-d=$(mktemp -d) && gh release download --repo zuplo/zproj --pattern "*$(uname -s | tr A-Z a-z)_$(uname -m)*.tar.gz" --dir "$d" && tar -xzf "$d"/*.tar.gz -C "$d" && mkdir -p ~/.zproj/bin && mv "$d/zproj" ~/.zproj/bin/ && sudo ln -sf ~/.zproj/bin/zproj /usr/local/bin/zproj && rm -rf "$d" && echo "zproj installed ✓"
+d=$(mktemp -d) && curl -fsSL "https://github.com/zuplo/zproj/releases/latest/download/zproj_$(curl -sL https://api.github.com/repos/zuplo/zproj/releases/latest | grep tag_name | sed -E 's/.*"v([^"]+)".*/\1/')_$(uname -s | tr A-Z a-z)_$(uname -m).tar.gz" | tar -xz -C "$d" && mkdir -p ~/.zproj/bin && mv "$d/zproj" ~/.zproj/bin/ && sudo ln -sf ~/.zproj/bin/zproj /usr/local/bin/zproj && rm -rf "$d" && echo "zproj installed ✓"
 ```
 
 After the initial install, update with `zproj update` (no sudo needed).
@@ -217,3 +221,7 @@ Add to your Claude Code MCP settings (`~/.claude/claude_desktop_config.json`):
 ## Updating
 
 The CLI checks for updates once per day and will notify you if a newer version is available. Run `zproj update` to upgrade.
+
+## Disclaimer
+
+This is not an official [Zuplo](https://zuplo.com) product. It is a free, open-source tool provided as-is under the [MIT License](LICENSE), with no warranty or support guarantees. Use at your own risk.
