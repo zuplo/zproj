@@ -211,41 +211,56 @@
     .ci code { background: transparent; border: none; padding: 0; color: var(--green-400); font-size: 0.85rem; white-space: nowrap; }
     .ci span { color: var(--text-dim); font-size: 0.84rem; }
 
-    /* Command list */
-    .cmd-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 900px) { .cmd-list { grid-template-columns: 1fr; } }
-    .cmd-item {
+    /* Demo terminal */
+    .demo-term {
+      background: var(--bg-code); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; max-width: 780px; margin: 0 auto;
+    }
+    .demo-body {
+      padding: 20px 24px; min-height: 320px; max-height: 380px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.86rem;
+      line-height: 1.8; overflow-y: auto;
+    }
+    .demo-line { transition: opacity 0.15s; }
+    .demo-line .p { color: var(--green-500); }
+    .demo-comment { color: #3e5260; }
+    .demo-success { color: var(--green-400); font-weight: 500; }
+    .demo-cursor { color: var(--green-400); animation: blink 0.8s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .demo-pills {
+      display: flex; gap: 8px; justify-content: center; margin-top: 20px;
+    }
+    .pill {
+      padding: 7px 18px; border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+      color: var(--text-dim); background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+    }
+    .pill:hover { border-color: var(--border-light); color: var(--text); }
+    .pill-active { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.25); color: var(--green-400); }
+
+    /* Command reference */
+    .cmd-table { width: 100%; border-collapse: collapse; }
+    .cmd-table th {
+      text-align: left; padding: 12px 20px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .cmd-table td {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      vertical-align: top; font-size: 0.92rem;
+    }
+    .cmd-table tr:last-child td { border-bottom: none; }
+    .cmd-table tr:hover td { background: rgba(255,255,255,0.01); }
+    .cmd-table code {
+      background: transparent; border: none; padding: 0;
+      color: var(--green-400); font-size: 0.88rem; white-space: nowrap;
+    }
+    .cmd-table .cmd-desc { color: var(--text-dim); line-height: 1.5; }
+    .cmd-table .cmd-note { display: block; font-size: 0.82rem; color: #4a5e6e; margin-top: 4px; }
+    .cmd-table-wrap {
       background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px 28px; transition: border-color 0.15s;
+      border-radius: 14px; overflow: hidden;
     }
-    .cmd-item.cmd-wide { grid-column: 1 / -1; }
-    .cmd-item:hover { border-color: var(--border-light); }
-    .cmd-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .cmd-name {
-      background: transparent !important; border: none !important; padding: 0 !important;
-      color: var(--green-400); font-size: 0.95rem; font-weight: 500;
-    }
-    .cmd-badge {
-      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--yellow);
-      background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.15);
-      border-radius: 4px; padding: 2px 8px;
-    }
-    .cmd-item p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
-    .cmd-item p code { font-size: 0.82rem; }
-    .cmd-ex {
-      margin-top: 14px; padding: 14px 18px;
-      background: var(--bg-code); border: 1px solid var(--border); border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
-      line-height: 1.8; white-space: pre; overflow-x: auto;
-    }
-    .cmd-ex .p { color: var(--green-500); } .cmd-ex .c { color: #3e5260; } .cmd-ex .o { color: var(--text-dim); }
-    .cmd-warn {
-      margin-top: 14px; padding: 12px 16px;
-      background: rgba(251,191,36,0.04); border: 1px solid rgba(251,191,36,0.12);
-      border-radius: 8px; font-size: 0.84rem; color: var(--yellow); line-height: 1.5;
-    }
-    .cmd-warn code { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.15); color: var(--yellow); font-size: 0.8rem; }
 
     /* Footer */
     footer {
@@ -266,8 +281,9 @@
       .sec { padding: 64px 0; }
       .two { gap: 32px; }
       .term pre, .cfg pre { font-size: 0.76rem; padding: 16px; }
-      .cmd-item { padding: 20px; }
-      .cmd-ex { font-size: 0.75rem; padding: 12px 14px; }
+      .demo-body { min-height: 260px; max-height: 320px; font-size: 0.76rem; padding: 16px; }
+      .cmd-table td, .cmd-table th { padding: 12px 14px; font-size: 0.85rem; }
+      .cmd-table code { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -318,47 +334,186 @@
 
 <div class="sec-line"></div>
 
-<!-- Features -->
+<!-- Demo -->
 <div class="sec" id="features">
   <div class="wrap">
-    <div class="sec-tag">Features</div>
-    <h2>Everything you need for multi-repo development.</h2>
-    <p class="desc">Stop juggling branches across repos. Create a workspace, do your work, tear it down.</p>
+    <div style="text-align:center">
+      <div class="sec-tag">How it works</div>
+      <h2>From zero to multi-repo workspace in seconds.</h2>
+      <p class="desc" style="margin:0 auto 52px">Define your repos once, then create isolated workspaces with a single command. Every repo gets its own branch, worktree, and VS Code workspace file.</p>
+    </div>
 
-    <div class="feat-grid">
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-        <h3>Instant workspaces</h3>
-        <p>One command creates worktrees for every repo in your group, with a VS Code workspace file ready to open.</p>
+    <div class="demo-term">
+      <div class="term-bar">
+        <div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div>
+        <div class="term-t">~/projects</div>
       </div>
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
-        <h3>Fully parallel</h3>
-        <p>Clones, syncs, pulls, pushes, and hooks run concurrently across all repos. Built in Go.</p>
-      </div>
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
-        <h3>Short repo names</h3>
-        <p>Set your git org once. Use <code>my-app</code> instead of the full URL. GitHub, GitLab, Bitbucket, or self-hosted.</p>
-      </div>
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M12 6V2"/><path d="M12 22v-4"/><path d="M6 12H2"/><path d="M22 12h-4"/><circle cx="12" cy="12" r="4"/></svg></div>
-        <h3>Lifecycle hooks</h3>
-        <p>Auto-run <code>pnpm install</code> or any setup command after project creation. Global, group, or per-repo.</p>
-      </div>
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <h3>Context-aware</h3>
-        <p><code>hk pull</code>, <code>hk push</code>, <code>hk status</code> auto-detect your project from the current directory.</p>
-      </div>
-      <div class="fi">
-        <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg></div>
-        <h3>Self-updating</h3>
-        <p>Checks for updates daily. <code>hk update</code> upgrades in place — no sudo after initial install.</p>
-      </div>
+      <div class="demo-body" id="demo"></div>
+    </div>
+
+    <div class="demo-pills">
+      <div class="pill pill-active" data-step="0">Setup</div>
+      <div class="pill" data-step="1">Create</div>
+      <div class="pill" data-step="2">Work</div>
+      <div class="pill" data-step="3">Clean up</div>
     </div>
   </div>
 </div>
+
+<script>
+const steps = [
+  {
+    lines: [
+      { type: 'cmd', text: '$ hk init' },
+      { type: 'out', text: 'Created hike.yaml' },
+      { type: 'gap' },
+      { type: 'comment', text: '# Edit hike.yaml to add your repos...' },
+      { type: 'gap' },
+      { type: 'cmd', text: '$ hk sync' },
+      { type: 'out', text: 'Syncing group "platform" (3 repos)...' },
+      { type: 'out', text: '  my-app:     cloned', delay: 300 },
+      { type: 'out', text: '  shared-lib: cloned', delay: 150 },
+      { type: 'out', text: '  api:        cloned', delay: 200 },
+      { type: 'out', text: 'Sync complete.' },
+    ]
+  },
+  {
+    lines: [
+      { type: 'cmd', text: '$ hk platform' },
+      { type: 'out', text: 'Generated project name: bold-cedar' },
+      { type: 'out', text: 'Creating project "platform-bold-cedar" in group "platform"...' },
+      { type: 'out', text: 'Running onCreate hooks...' },
+      { type: 'out', text: '  my-app:     hook done', delay: 400 },
+      { type: 'out', text: '  shared-lib: hook done', delay: 200 },
+      { type: 'out', text: '  api:        hook done', delay: 300 },
+      { type: 'success', text: 'Project "platform-bold-cedar" created successfully.' },
+      { type: 'gap' },
+      { type: 'cmd', text: '$ ls platform-bold-cedar/' },
+      { type: 'out', text: 'my-app/  shared-lib/  api/  platform-bold-cedar.code-workspace' },
+    ]
+  },
+  {
+    lines: [
+      { type: 'cmd', text: '$ cd platform-bold-cedar' },
+      { type: 'gap' },
+      { type: 'cmd', text: '$ hk status', prompt: '~/projects/platform-bold-cedar' },
+      { type: 'out', text: 'Project: platform-bold-cedar' },
+      { type: 'out', text: '' },
+      { type: 'out', text: '  my-app       branch: platform-bold-cedar' },
+      { type: 'out', text: '  shared-lib   branch: platform-bold-cedar  [dirty]' },
+      { type: 'out', text: '  api          branch: platform-bold-cedar' },
+      { type: 'gap' },
+      { type: 'cmd', text: '$ hk pull', prompt: '~/projects/platform-bold-cedar' },
+      { type: 'out', text: '  my-app:     pulled' },
+      { type: 'out', text: '  shared-lib: pulled' },
+      { type: 'out', text: '  api:        pulled' },
+    ]
+  },
+  {
+    lines: [
+      { type: 'cmd', text: '$ hk delete platform-bold-cedar' },
+      { type: 'out', text: 'Deleting project "platform-bold-cedar"...' },
+      { type: 'out', text: '  my-app:     removed', delay: 200 },
+      { type: 'out', text: '  shared-lib: removed', delay: 150 },
+      { type: 'out', text: '  api:        removed', delay: 180 },
+      { type: 'success', text: 'Project "platform-bold-cedar" deleted.' },
+      { type: 'gap' },
+      { type: 'cmd', text: '$ hk list' },
+      { type: 'out', text: 'No projects found.' },
+    ]
+  }
+];
+
+let currentStep = 0;
+let playing = false;
+
+const demo = document.getElementById('demo');
+const pills = document.querySelectorAll('.pill');
+
+pills.forEach(p => p.addEventListener('click', () => {
+  const s = parseInt(p.dataset.step);
+  if (s !== currentStep) { currentStep = s; playStep(s); }
+}));
+
+function updatePills() {
+  pills.forEach(p => p.classList.toggle('pill-active', parseInt(p.dataset.step) === currentStep));
+}
+
+async function playStep(idx) {
+  if (playing) return;
+  playing = true;
+  updatePills();
+  demo.innerHTML = '';
+  const step = steps[idx];
+
+  for (const line of step.lines) {
+    if (line.type === 'gap') {
+      const el = document.createElement('div');
+      el.style.height = '8px';
+      demo.appendChild(el);
+      await wait(100);
+      continue;
+    }
+
+    const el = document.createElement('div');
+    el.className = 'demo-line';
+
+    if (line.type === 'cmd') {
+      el.innerHTML = `<span class="p">${line.prompt ? line.prompt + ' ' : ''}$ </span><span class="demo-typed"></span><span class="demo-cursor">|</span>`;
+      demo.appendChild(el);
+      scrollDemo();
+      await typeText(el.querySelector('.demo-typed'), line.text.replace(/^\$ /, ''), 35);
+      el.querySelector('.demo-cursor').remove();
+      await wait(300);
+    } else if (line.type === 'comment') {
+      el.className = 'demo-line demo-comment';
+      el.textContent = line.text;
+      demo.appendChild(el);
+      scrollDemo();
+      await wait(line.delay || 200);
+    } else if (line.type === 'success') {
+      el.className = 'demo-line demo-success';
+      el.textContent = line.text;
+      el.style.opacity = '0';
+      demo.appendChild(el);
+      scrollDemo();
+      await wait(line.delay || 150);
+      el.style.opacity = '1';
+    } else {
+      el.textContent = line.text;
+      el.style.opacity = '0';
+      demo.appendChild(el);
+      scrollDemo();
+      await wait(line.delay || 80);
+      el.style.opacity = '1';
+    }
+  }
+
+  // Auto-advance after pause
+  playing = false;
+  await wait(3000);
+  if (currentStep === idx) {
+    currentStep = (currentStep + 1) % steps.length;
+    playStep(currentStep);
+  }
+}
+
+function scrollDemo() {
+  demo.scrollTop = demo.scrollHeight;
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function typeText(el, text, speed) {
+  for (const ch of text) {
+    el.textContent += ch;
+    scrollDemo();
+    await wait(speed + Math.random() * 20);
+  }
+}
+
+playStep(0);
+</script>
 
 <div class="sec-line"></div>
 
@@ -443,68 +598,61 @@
 <div class="sec" id="commands">
   <div class="wrap">
     <div style="text-align:center">
-      <div class="sec-tag">Commands</div>
-      <h2>Simple, memorable commands.</h2>
-      <p class="desc" style="margin:0 auto 60px">Every command works with <code>hike</code> or <code>hk</code>. Most commands auto-detect the current project when run from inside one.</p>
+      <div class="sec-tag">Reference</div>
+      <h2>Commands</h2>
+      <p class="desc" style="margin:0 auto 52px">Every command works with <code>hike</code> or <code>hk</code>. Commands that take a project name auto-detect it from cwd.</p>
     </div>
 
-    <div class="cmd-list">
-      <div class="cmd-item cmd-wide">
-        <div class="cmd-head">
-          <code class="cmd-name">hk [group] [name]</code>
-          <span class="cmd-badge">default</span>
-        </div>
-        <p>Create a new project. The first argument is matched against known groups. If it matches, it's the group; otherwise it's the project name using the default group. Omit the name to generate a random one.</p>
-        <div class="cmd-ex"><span class="p">$</span> hk platform my-feature <span class="c"># platform-my-feature/</span>
-<span class="p">$</span> hk platform <span class="c"># platform-bold-cedar/ (random)</span>
-<span class="p">$</span> hk platform -c purple <span class="c"># with VS Code title color</span>
-<span class="p">$</span> hk platform -c <span class="c"># random color</span></div>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk init</code></div>
-        <p>Create a new <code>hike.yaml</code> config file in the current directory with an annotated example. Prompts before overwriting.</p>
-      </div>
-
-      <div class="cmd-item cmd-wide">
-        <div class="cmd-head"><code class="cmd-name">hk sync [-g group]</code></div>
-        <p>Clone any missing repos and hard-reset all <code>.hike/</code> repos to the latest <code>origin/HEAD</code>. This is the command to run after adding new repos to your config. Runs all clones in parallel.</p>
-        <div class="cmd-warn">Performs <code>git reset --hard</code> on .hike/ repos. Never work directly in .hike/ &mdash; use project worktrees instead.</div>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk pull [project]</code></div>
-        <p>Run <code>git pull --ff-only</code> on every repo in the project. Auto-detects the project from cwd, or pass a name explicitly.</p>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk push [project]</code></div>
-        <p>Run <code>git push</code> on every repo in the project. Runs in parallel across all repos.</p>
-      </div>
-
-      <div class="cmd-item cmd-wide">
-        <div class="cmd-head"><code class="cmd-name">hk status [project]</code></div>
-        <p>Show the branch, dirty state, and ahead/behind status for each repo in the project.</p>
-        <div class="cmd-ex"><span class="p">$</span> hk status
-<span class="o">  my-app       branch: platform-bold-cedar</span>
-<span class="o">  shared-lib   branch: platform-bold-cedar  [dirty]</span>
-<span class="o">  api          branch: platform-bold-cedar</span></div>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk delete [project]</code></div>
-        <p>Remove a project directory and clean up all its git worktrees and branches. Auto-detects the project from cwd.</p>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk list</code></div>
-        <p>List all projects in the current hike root.</p>
-      </div>
-
-      <div class="cmd-item">
-        <div class="cmd-head"><code class="cmd-name">hk update</code></div>
-        <p>Download and install the latest release. Binary lives in <code>~/.hike/bin/</code> so no sudo is needed after the initial install.</p>
-      </div>
+    <div class="cmd-table-wrap">
+      <table class="cmd-table">
+        <thead>
+          <tr><th>Command</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>hk [group] [name]</code></td>
+            <td>
+              <span class="cmd-desc">Create a new project with worktrees for all repos in the group. First arg is matched against known groups; if no match, treated as the project name with the default group. Omit name for a random one.</span>
+              <span class="cmd-note">Flags: <code>-c &lt;color&gt;</code> sets VS Code title bar color. <code>-c</code> alone picks a random color. <code>-g &lt;group&gt;</code> <code>-n &lt;name&gt;</code></span>
+            </td>
+          </tr>
+          <tr>
+            <td><code>hk init</code></td>
+            <td><span class="cmd-desc">Create an annotated <code>hike.yaml</code> config file in the current directory. Prompts before overwriting an existing file.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk sync</code></td>
+            <td>
+              <span class="cmd-desc">Clone any missing repos into <code>.hike/</code> and hard-reset existing ones to <code>origin/HEAD</code>. Run after editing config to add new repos. All clones run in parallel.</span>
+              <span class="cmd-note" style="color:var(--yellow)">Warning: performs <code style="color:var(--yellow);background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.15)">git reset --hard</code> on .hike/ repos. Never work in .hike/ directly.</span>
+            </td>
+          </tr>
+          <tr>
+            <td><code>hk pull</code></td>
+            <td><span class="cmd-desc">Run <code>git pull --ff-only</code> on every repo in the project. Parallel across all repos.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk push</code></td>
+            <td><span class="cmd-desc">Run <code>git push</code> on every repo in the project. Parallel across all repos.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk status</code></td>
+            <td><span class="cmd-desc">Show branch, dirty state, and ahead/behind for each repo in the project.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk delete</code></td>
+            <td><span class="cmd-desc">Remove a project and clean up all git worktrees and branches.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk list</code></td>
+            <td><span class="cmd-desc">List all projects in the current hike root.</span></td>
+          </tr>
+          <tr>
+            <td><code>hk update</code></td>
+            <td><span class="cmd-desc">Self-update to the latest release. No sudo needed after initial install.</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
