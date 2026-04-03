@@ -16,31 +16,31 @@ Or as a single command:
 d=$(mktemp -d) && curl -fsSL "https://github.com/zuplo/hike/releases/latest/download/hike_$(curl -sL https://api.github.com/repos/zuplo/hike/releases/latest | grep tag_name | sed -E 's/.*"v([^"]+)".*/\1/')_$(uname -s | tr A-Z a-z)_$(uname -m).tar.gz" | tar -xz -C "$d" && mkdir -p ~/.hike/bin && mv "$d/hike" ~/.hike/bin/ && sudo ln -sf ~/.hike/bin/hike /usr/local/bin/hike && rm -rf "$d" && echo "hike installed ✓"
 ```
 
-After the initial install, update with `hike update` (no sudo needed).
+After the initial install, update with `hk update` (no sudo needed). Both `hike` and `hk` are installed automatically.
 
 ## Quick Start
 
 ```sh
 # Create a new project directory and generate a config file
 mkdir my-projects && cd my-projects
-hike init
+hk init
 
 # Edit hike.yaml to add your repos, then sync to clone them
-hike sync
+hk sync
 
 # Create a workspace
-hike platform                 # -> platform-bold-cedar/
-hike platform my-feature      # -> platform-my-feature/
+hk platform                 # -> platform-bold-cedar/
+hk platform my-feature      # -> platform-my-feature/
 
 # Open in VS Code
 code platform-my-feature/platform-my-feature.code-workspace
 
 # Run commands from inside a project (auto-detects project)
 cd platform-my-feature
-hike pull
-hike push
-hike status
-hike delete
+hk pull
+hk push
+hk status
+hk delete
 ```
 
 ## Configuration
@@ -86,7 +86,7 @@ templates:
 - **Repo full URL**: SSH (`git@github.com:org/repo.git`) or HTTPS (`https://...`) still works
 - **Repo object**: `repo` (required), `name` (optional), `branch` (optional, defaults to `main`)
 - **Groups**: repos are organized into groups. Set `default: true` on one group to use it when no group is specified. If only one group exists, it's the default automatically.
-- **Aliases**: set `aliases: [short]` on a group to use either name in commands (e.g. `hike mktg`)
+- **Aliases**: set `aliases: [short]` on a group to use either name in commands (e.g. `hk mktg`)
 
 ### Hooks
 
@@ -114,31 +114,31 @@ Hooks run in parallel across repos for speed.
 
 ## Commands
 
-### `hike [group] [name] [-c color]`
+### `hk [group] [name] [-c color]`
 
 Create a new project. This is the default command. The project directory is named `{group}-{name}`.
 
 ```sh
-hike platform my-feature    # Creates platform-my-feature/
-hike platform               # Generates random name: platform-bold-cedar/
-hike my-feature             # Uses default group: platform-my-feature/
-hike platform -c purple     # With a color
-hike platform my-feature -c # Random color
+hk platform my-feature    # Creates platform-my-feature/
+hk platform               # Generates random name: platform-bold-cedar/
+hk my-feature             # Uses default group: platform-my-feature/
+hk platform -c purple     # With a color
+hk platform my-feature -c # Random color
 ```
 
 The first argument is matched against known groups — if it matches, it's treated as the group. Otherwise it's the project name (using the default group).
 
 Available colors for `-c`: `blue`, `cyan`, `green`, `indigo`, `lime`, `orange`, `pink`, `purple`, `red`, `rose`, `sky`, `slate`, `teal`, `yellow`.
 
-### `hike init`
+### `hk init`
 
 Create a new `hike.yaml` configuration file in the current directory.
 
 ```sh
-hike init
+hk init
 ```
 
-### `hike sync [-g group]`
+### `hk sync [-g group]`
 
 Clone any missing repos and sync all `.hike/` repos to the latest `origin/HEAD`. This is the command to run after editing your config to add new repos.
 
@@ -146,68 +146,59 @@ Clone any missing repos and sync all `.hike/` repos to the latest `origin/HEAD`.
 > Sync performs a hard reset (`git reset --hard`) on `.hike/` repos to match the remote. Any uncommitted or unpushed changes in `.hike/` directories **will be lost**. This is by design — these repos are meant to be clean mirrors of the remote. Always do your work in project worktrees, never directly in `.hike/`.
 
 ```sh
-hike sync
-hike sync -g backend
+hk sync
+hk sync -g backend
 ```
 
-### `hike pull [project-name]`
+### `hk pull [project-name]`
 
 Pull latest changes (fast-forward only) in all repos of a project. Auto-detects the project if run from inside one.
 
 ```sh
-hike pull                   # From inside a project
-hike pull platform-my-feat  # By name
+hk pull                   # From inside a project
+hk pull platform-my-feat  # By name
 ```
 
-### `hike push [project-name]`
+### `hk push [project-name]`
 
 Push all repos in a project. Auto-detects the project if run from inside one.
 
 ```sh
-hike push                   # From inside a project
-hike push platform-my-feat  # By name
+hk push                   # From inside a project
+hk push platform-my-feat  # By name
 ```
 
-### `hike status [project-name]`
+### `hk status [project-name]`
 
 Show the status of each repo in a project (branch, dirty state, ahead/behind). Auto-detects the project if run from inside one.
 
 ```sh
-hike status
+hk status
 ```
 
-### `hike delete [project-name]`
+### `hk delete [project-name]`
 
 Remove a project and its worktrees. Auto-detects the project if run from inside one.
 
 ```sh
-hike delete                     # From inside a project
-hike delete platform-my-feat    # By name
+hk delete                     # From inside a project
+hk delete platform-my-feat    # By name
 ```
 
-### `hike list`
+### `hk list`
 
 List all projects.
 
 ```sh
-hike list
+hk list
 ```
 
-### `hike update`
+### `hk update`
 
 Self-update to the latest release.
 
 ```sh
-hike update
-```
-
-### `hike alias [name]`
-
-Create a shorter alias for the `hike` command.
-
-```sh
-hike alias z
-# Now: z platform, z pull, z sync, etc.
+hk update
 ```
 
 ## Directory Structure
@@ -276,7 +267,7 @@ Add to your Claude Code MCP settings (`~/.claude/claude_desktop_config.json`):
 
 ## Updating
 
-The CLI checks for updates once per day and will notify you if a newer version is available. Run `hike update` to upgrade.
+The CLI checks for updates once per day and will notify you if a newer version is available. Run `hk update` to upgrade.
 
 ## Disclaimer
 

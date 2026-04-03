@@ -46,17 +46,23 @@ mv "${DL_DIR}/hike" "${BIN_HOME}/hike"
 chmod +x "${BIN_HOME}/hike"
 rm -rf "$DL_DIR"
 
-# Create symlink in /usr/local/bin (sudo only needed once)
-if [ -L "${LINK_DIR}/hike" ] && [ "$(readlink "${LINK_DIR}/hike")" = "${BIN_HOME}/hike" ]; then
-  : # Symlink already correct
-elif [ -w "$LINK_DIR" ]; then
-  ln -sf "${BIN_HOME}/hike" "${LINK_DIR}/hike"
-else
-  echo "Creating symlink in ${LINK_DIR} (requires sudo)..."
-  sudo ln -sf "${BIN_HOME}/hike" "${LINK_DIR}/hike"
-fi
+# Create symlinks in /usr/local/bin (sudo only needed once)
+create_link() {
+  name=$1
+  if [ -L "${LINK_DIR}/${name}" ] && [ "$(readlink "${LINK_DIR}/${name}")" = "${BIN_HOME}/hike" ]; then
+    return
+  elif [ -w "$LINK_DIR" ]; then
+    ln -sf "${BIN_HOME}/hike" "${LINK_DIR}/${name}"
+  else
+    sudo ln -sf "${BIN_HOME}/hike" "${LINK_DIR}/${name}"
+  fi
+}
+
+echo "Creating symlinks (requires sudo)..."
+create_link hike
+create_link hk
 
 echo "hike ${VERSION} installed to ${BIN_HOME}/hike"
-echo "Symlinked to ${LINK_DIR}/hike"
+echo "Available as: hike, hk"
 echo ""
 echo "Future updates need no sudo — just run: hike update"
