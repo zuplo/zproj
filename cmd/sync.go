@@ -13,7 +13,7 @@ import (
 
 var syncCmd = &cobra.Command{
 	Use:   "sync",
-	Short: "Sync .main repos to latest origin/HEAD",
+	Short: "Clone missing repos and sync all .main repos to latest origin/HEAD",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireConfig(); err != nil {
 			return err
@@ -42,16 +42,26 @@ func runSync() error {
 
 	for groupName, group := range groups {
 		mainDir := config.MainDir(rootDir, groupName)
-		fmt.Printf("Syncing group %q...\n", groupName)
+		if err := os.MkdirAll(mainDir, 0755); err != nil {
+			return fmt.Errorf("creating .main for group %q: %w", groupName, err)
+		}
+
+		fmt.Printf("Syncing group %q (%d repos)...\n", groupName, len(group.Repos))
 
 		results := git.RunParallel(group.Repos, func(repo config.Repo) git.Result {
 			repoName := repo.RepoName()
 			repoDir := filepath.Join(mainDir, repoName)
 
+			// Clone if not present
 			if _, err := os.Stat(repoDir); os.IsNotExist(err) {
-				return git.Result{Repo: repoName, Err: fmt.Errorf("not initialized, run 'zproj init' first")}
+				fmt.Printf("  Cloning %s...\n", repoName)
+				if err := git.Clone(repo.URL, repoDir, repo.RepoBranch()); err != nil {
+					return git.Result{Repo: repoName, Err: fmt.Errorf("clone: %w", err)}
+				}
+				return git.Result{Repo: repoName, Output: "cloned"}
 			}
 
+			// Already cloned — fetch and reset
 			if err := git.Fetch(repoDir); err != nil {
 				return git.Result{Repo: repoName, Err: fmt.Errorf("fetch: %w", err)}
 			}

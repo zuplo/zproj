@@ -21,12 +21,12 @@ After the initial install, update with `zproj update` (no sudo needed).
 ## Quick Start
 
 ```sh
-# Create a new project directory and initialize
+# Create a new project directory and generate a config file
 mkdir my-projects && cd my-projects
 zproj init
 
-# Edit zproj.yaml to add your repos, then run init again
-zproj init
+# Edit zproj.yaml to add your repos, then sync to clone them
+zproj sync
 
 # Create a workspace (this is the default command)
 zproj my-feature
@@ -98,7 +98,7 @@ Available colors for `--color`: `blue`, `cyan`, `green`, `indigo`, `lime`, `oran
 
 ### `zproj init`
 
-Initialize the project. If no config file exists, interactively creates one. If a config exists, clones all repos into `.main/` directories.
+Create a new `zproj.yaml` configuration file in the current directory. Prompts before overwriting an existing file.
 
 ```sh
 zproj init
@@ -106,7 +106,7 @@ zproj init
 
 ### `zproj sync [--group <g>]`
 
-Fetch and reset all `.main` repos to the latest `origin/HEAD`.
+Clone any missing repos and sync all `.main` repos to the latest `origin/HEAD`. This is the command to run after editing your config to add new repos.
 
 ```sh
 zproj sync
