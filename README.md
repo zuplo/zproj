@@ -106,17 +106,19 @@ Hooks run in parallel across repos for speed.
 
 ## Commands
 
-### `zproj <name> [--group <g>] [--color <color>]`
+### `zproj [group] [name] [-c color]`
 
 Create a new project. This is the default command.
 
 ```sh
-zproj my-feature
-zproj my-feature --group backend
-zproj my-feature -c purple
+zproj platform my-feature    # Group + name
+zproj platform               # Group only — generates a random name (e.g. "bold-cedar")
+zproj my-feature             # Name only — uses default group
+zproj platform -c purple     # With a color
+zproj platform my-feature -c # Random color
 ```
 
-Creates a directory with git worktrees for each repo and a VS Code workspace file.
+Creates a directory with git worktrees for each repo and a VS Code workspace file. The first argument is matched against known groups — if it matches, it's treated as the group. Otherwise it's the project name.
 
 Available colors for `--color`: `blue`, `cyan`, `green`, `indigo`, `lime`, `orange`, `pink`, `purple`, `red`, `rose`, `sky`, `slate`, `teal`, `yellow`.
 

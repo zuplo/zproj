@@ -3,16 +3,18 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ntotten/zproj/internal/names"
 	"github.com/ntotten/zproj/internal/project"
 	"github.com/spf13/cobra"
 )
 
 var createCmd = &cobra.Command{
-	Use:   "create [name]",
+	Use:   "create [group] [name]",
 	Short: "Create a new project with worktrees",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runCreate(args[0])
+		group, name := resolveCreateArgs(args)
+		return runCreateWithArgs(group, name)
 	},
 }
 
@@ -20,18 +22,36 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 }
 
-func runCreate(name string) error {
+func runCreateWithArgs(groupInput, name string) error {
 	if err := requireConfig(); err != nil {
 		return err
 	}
-	group, err := resolveGroup()
-	if err != nil {
-		return err
+
+	// Resolve group
+	var group string
+	if groupInput != "" {
+		resolved, ok := cfg.ResolveGroup(groupInput)
+		if !ok {
+			return fmt.Errorf("group %q not found in config", groupInput)
+		}
+		group = resolved
+	} else if cfg.DefaultGroup() != "" {
+		group = cfg.DefaultGroup()
+	} else {
+		return fmt.Errorf("no group specified and no default group set in config\n\nSet a default group in %s:\n  groups:\n    mygroup:\n      default: true", "zproj.yaml")
 	}
+
+	// Generate name if not provided
+	if name == "" {
+		name = names.Generate()
+		fmt.Printf("Generated project name: %s\n", name)
+	}
+
 	color := colorArg
 	if color == "random" {
 		color = project.RandomColor()
 	}
+
 	fmt.Printf("Creating project %q in group %q...\n", name, group)
 	if err := project.Create(rootDir, cfg, name, group, color); err != nil {
 		return err

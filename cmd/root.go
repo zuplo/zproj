@@ -19,17 +19,19 @@ var (
 	version    = "dev"
 )
 
+var nameArg string
+
 var rootCmd = &cobra.Command{
-	Use:   "zproj [project-name]",
+	Use:   "zproj [group] [name]",
 	Short: "Git worktree project manager",
 	Long:  "Manage multi-repo development workspaces using git worktrees.",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
+		if len(args) == 0 && groupArg == "" && nameArg == "" {
 			return cmd.Help()
 		}
-		// Default action: create a project
-		return runCreate(args[0])
+		group, name := resolveCreateArgs(args)
+		return runCreateWithArgs(group, name)
 	},
 	SilenceUsage: true,
 	Version:      version,
@@ -50,6 +52,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&groupArg, "group", "g", "", "group to operate on (default: the default group)")
+	rootCmd.Flags().StringVarP(&nameArg, "name", "n", "", "project name")
 	rootCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color (random if no color specified)")
 	rootCmd.Flags().Lookup("color").NoOptDefVal = "random"
 	createCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color (random if no color specified)")
@@ -90,6 +93,45 @@ func requireConfig() error {
 		return fmt.Errorf("no %s found. Run 'zproj init' in a directory with a config file", config.ConfigFile)
 	}
 	return nil
+}
+
+// resolveCreateArgs figures out group and name from positional args + flags.
+// Positional: `zproj <group> <name>`, `zproj <group>`, or `zproj <name>`.
+// The first arg is checked against known groups/aliases — if it matches, it's the group.
+// Otherwise it's treated as the project name (using default group).
+func resolveCreateArgs(args []string) (group, name string) {
+	// Flags take priority
+	group = groupArg
+	name = nameArg
+
+	switch len(args) {
+	case 2:
+		// zproj <group> <name>
+		if group == "" {
+			group = args[0]
+		}
+		if name == "" {
+			name = args[1]
+		}
+	case 1:
+		// Is it a known group?
+		if cfg != nil {
+			if _, ok := cfg.ResolveGroup(args[0]); ok {
+				if group == "" {
+					group = args[0]
+				}
+			} else {
+				// Not a group — treat as name
+				if name == "" {
+					name = args[0]
+				}
+			}
+		} else if name == "" {
+			name = args[0]
+		}
+	}
+
+	return group, name
 }
 
 func resolveGroup() (string, error) {
