@@ -22,6 +22,23 @@ type Metadata struct {
 
 const metadataFile = ".hike-project.json"
 
+// TemplateData is the data passed to all templates during project creation.
+type TemplateData struct {
+	ProjectName string
+	Group       string
+	Color       string // hex color value, empty if not set
+	ColorName   string // color name (e.g. "purple"), empty if not set
+	Repos       []RepoInfo
+	Variables   map[string]string
+}
+
+// RepoInfo provides repo details to templates.
+type RepoInfo struct {
+	Name   string
+	Branch string
+	URL    string
+}
+
 // Create creates a new project with worktrees for all repos in the group.
 func Create(root string, cfg *config.Config, projectName, group, color string) error {
 	grp, ok := cfg.Groups[group]
@@ -66,11 +83,7 @@ func Create(root string, cfg *config.Config, projectName, group, color string) e
 		return fmt.Errorf("errors creating worktrees:\n%s", strings.Join(errs, "\n"))
 	}
 
-	if err := generateWorkspace(projectDir, projectName, grp.Repos, color); err != nil {
-		return fmt.Errorf("generating workspace: %w", err)
-	}
-
-	if err := processTemplates(root, group, projectDir, projectName, cfg); err != nil {
+	if err := processTemplates(root, group, projectDir, projectName, color, grp.Repos, cfg); err != nil {
 		return fmt.Errorf("processing templates: %w", err)
 	}
 
@@ -366,100 +379,90 @@ func ColorNames() []string {
 	return names
 }
 
-type workspaceFile struct {
-	Folders  []workspaceFolder `json:"folders"`
-	Settings map[string]any    `json:"settings,omitempty"`
-}
-
-type workspaceFolder struct {
-	Path string `json:"path"`
-}
-
-func generateWorkspace(projectDir, name string, repos []config.Repo, color string) error {
-	ws := workspaceFile{
-		Folders: make([]workspaceFolder, len(repos)),
+func processTemplates(root, group, projectDir, name, color string, repos []config.Repo, cfg *config.Config) error {
+	// Build template data
+	data := TemplateData{
+		ProjectName: name,
+		Group:       group,
+		Variables:   make(map[string]string),
 	}
-	for i, repo := range repos {
-		ws.Folders[i] = workspaceFolder{Path: repo.RepoName()}
-	}
+
+	// Resolve color
 	if color != "" {
 		hex, ok := ResolveColor(color)
 		if !ok {
 			return fmt.Errorf("unknown color %q, valid colors: %s", color, strings.Join(ColorNames(), ", "))
 		}
-		ws.Settings = map[string]any{
-			"workbench.colorCustomizations": map[string]string{
-				"titleBar.activeBackground":   hex,
-				"titleBar.activeForeground":   "#ffffff",
-				"titleBar.inactiveBackground": hex,
-				"titleBar.inactiveForeground": "#cccccc",
-			},
-		}
+		data.Color = hex
+		data.ColorName = color
 	}
 
-	data, err := json.MarshalIndent(ws, "", "  ")
-	if err != nil {
-		return err
+	// Build repo list
+	for _, repo := range repos {
+		data.Repos = append(data.Repos, RepoInfo{
+			Name:   repo.RepoName(),
+			Branch: repo.RepoBranch(),
+			URL:    repo.URL,
+		})
 	}
 
-	wsPath := filepath.Join(projectDir, name+".code-workspace")
-	return os.WriteFile(wsPath, append(data, '\n'), 0644)
-}
-
-func processTemplates(root, group, projectDir, name string, cfg *config.Config) error {
-	vars := map[string]string{
-		"ProjectName": name,
-		"Group":       group,
-	}
+	// Custom variables
 	if cfg.Templates != nil {
 		for k, v := range cfg.Templates.Variables {
-			vars[k] = v
+			data.Variables[k] = v
 		}
 	}
 
-	templateDirs := []string{
-		filepath.Join(root, ".template"),
+	tmplDir := filepath.Join(root, ".template")
+	if _, err := os.Stat(tmplDir); os.IsNotExist(err) {
+		return nil
 	}
 
-	for _, tmplDir := range templateDirs {
-		if _, err := os.Stat(tmplDir); os.IsNotExist(err) {
-			continue
+	funcMap := template.FuncMap{
+		"json": func(v any) string {
+			b, _ := json.MarshalIndent(v, "", "  ")
+			return string(b)
+		},
+	}
+
+	return filepath.Walk(tmplDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
 		}
 
-		err := filepath.Walk(tmplDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() {
-				return err
-			}
+		relPath, _ := filepath.Rel(tmplDir, path)
 
-			relPath, _ := filepath.Rel(tmplDir, path)
-			destPath := filepath.Join(projectDir, relPath)
+		// Template the filename itself (e.g. "{{.ProjectName}}.code-workspace")
+		nameTmpl, err := template.New("filename").Parse(relPath)
+		if err != nil {
+			return fmt.Errorf("parsing filename template %s: %w", relPath, err)
+		}
+		var nameBuf strings.Builder
+		if err := nameTmpl.Execute(&nameBuf, data); err != nil {
+			return fmt.Errorf("executing filename template %s: %w", relPath, err)
+		}
+		destPath := filepath.Join(projectDir, nameBuf.String())
 
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-
-			tmpl, err := template.New(filepath.Base(path)).Parse(string(content))
-			if err != nil {
-				return fmt.Errorf("parsing template %s: %w", relPath, err)
-			}
-
-			if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
-				return err
-			}
-
-			f, err := os.Create(destPath)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-
-			return tmpl.Execute(f, vars)
-		})
+		content, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
+		tmpl, err := template.New(filepath.Base(path)).Funcs(funcMap).Parse(string(content))
+		if err != nil {
+			return fmt.Errorf("parsing template %s: %w", relPath, err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		f, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		return tmpl.Execute(f, data)
+	})
 }

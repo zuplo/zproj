@@ -127,9 +127,11 @@ All hooks run in parallel across repos.
 |------|------|
 | `onCreate` | After worktrees are created. Runs in each repo directory. |
 
-## `templates`
+## Templates
 
-Files in `.template/` at the root are processed with Go's `text/template` and copied into each new project.
+Files in `.template/` at the root are processed with [Go's `text/template`](https://pkg.go.dev/text/template) and copied into each new project. Both **file contents** and **filenames** are templated.
+
+Run `hk init` to generate example templates including a VS Code workspace and Claude Code settings.
 
 ```yaml
 templates:
@@ -137,4 +139,85 @@ templates:
     ORG: your-org
 ```
 
-Available variables: `{{.ProjectName}}`, `{{.Group}}`, and any custom key from `templates.variables`.
+### Template data
+
+All templates receive a `TemplateData` struct with these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `.ProjectName` | string | Full project name (e.g. `platform-my-feature`) |
+| `.Group` | string | Group name |
+| `.Color` | string | Hex color value (e.g. `#7e22ce`), empty if not set |
+| `.ColorName` | string | Color name (e.g. `purple`), empty if not set |
+| `.Repos` | list | List of repos in the group |
+| `.Variables` | map | Custom variables from `templates.variables` |
+
+Each repo in `.Repos` has:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `.Name` | string | Repo directory name |
+| `.Branch` | string | Default branch |
+| `.URL` | string | Full git URL |
+
+### Template functions
+
+| Function | Description |
+|----------|-------------|
+| `json` | Marshal a value to indented JSON |
+
+### Filename templating
+
+Filenames can contain template expressions. For example, a file named:
+
+```
+.template/{{.ProjectName}}.code-workspace
+```
+
+Creates `platform-my-feature.code-workspace` in each project.
+
+### Example: VS Code workspace
+
+```
+{
+  "folders": [
+{{- range $i, $repo := .Repos}}
+    {{- if $i}},{{end}}
+    { "path": "{{$repo.Name}}" }
+{{- end}}
+  ]{{if .Color}},
+  "settings": {
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "{{.Color}}",
+      "titleBar.activeForeground": "#ffffff"
+    }
+  }{{end}}
+}
+```
+
+### Example: Claude Code settings
+
+Create `.template/.claude/settings.local.json` to grant Claude Code access to all repos in the project via [additional directories](https://docs.claude.com/en/docs/permissions):
+
+```
+{
+  "additionalDirectories": [
+{{- range $i, $repo := .Repos}}
+    {{- if $i}},{{end}}
+    "{{$repo.Name}}"
+{{- end}}
+  ]
+}
+```
+
+This allows Claude Code to read and edit files across all repos in the project without permission prompts.
+
+### Example: environment file
+
+Create `.template/.env`:
+
+```
+PROJECT={{.ProjectName}}
+GROUP={{.Group}}
+ORG={{index .Variables "ORG"}}
+```
