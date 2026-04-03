@@ -128,6 +128,17 @@ Self-update to the latest release.
 zproj update
 ```
 
+### `zproj alias [name]`
+
+Create a shorter alias for the `zproj` command. Prompts for a name if not provided.
+
+```sh
+zproj alias z
+# Now you can use 'z' instead of 'zproj'
+z my-feature
+z sync
+```
+
 ## Directory Structure
 
 ```
