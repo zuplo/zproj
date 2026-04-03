@@ -3,7 +3,7 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-    paths: [website/**]
+    paths: [docs/**]
 
 permissions:
   contents: read
@@ -31,10 +31,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: website/pnpm-lock.yaml
+          cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Install and build
-        working-directory: website
+        working-directory: docs
         run: |
           pnpm install --frozen-lockfile
           pnpm build
@@ -43,7 +43,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: website/dist
+          path: docs/dist
 
       - id: deployment
         uses: actions/deploy-pages@v5

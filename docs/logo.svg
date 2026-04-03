@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <!-- Mountain -->
-  <path d="M12 104 L52 32 L64 52 L76 28 L116 104 Z" fill="#15803d" />
-  <!-- Trail -->
-  <path d="M64 104 L68 76 L60 60 L68 44 L76 28" stroke="#fbbf24" stroke-width="4" stroke-linecap="round" fill="none" />
-</svg>
