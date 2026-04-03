@@ -253,6 +253,20 @@
       position: relative; z-index: 1;
     }
     footer a { color: var(--text-dim); } footer a:hover { color: var(--green-400); }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .wrap { padding: 0 20px; }
+      .nav-links a:not(.nav-gh) { display: none; }
+      .hero { padding: 140px 0 80px; }
+      .hero h1 { font-size: 2.4rem; }
+      .install-box { font-size: 0.75rem; padding: 14px 16px; }
+      .sec { padding: 64px 0; }
+      .two { gap: 32px; }
+      .term pre, .cfg pre { font-size: 0.76rem; padding: 16px; }
+      .cmd-item { padding: 20px; }
+      .cmd-ex { font-size: 0.75rem; padding: 12px 14px; }
+    }
   </style>
 </head>
 <body>
