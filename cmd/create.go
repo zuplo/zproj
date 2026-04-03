@@ -28,8 +28,12 @@ func runCreate(name string) error {
 	if err != nil {
 		return err
 	}
+	color := colorArg
+	if color == "random" {
+		color = project.RandomColor()
+	}
 	fmt.Printf("Creating project %q in group %q...\n", name, group)
-	if err := project.Create(rootDir, cfg, name, group, colorArg); err != nil {
+	if err := project.Create(rootDir, cfg, name, group, color); err != nil {
 		return err
 	}
 	fmt.Printf("Project %q created successfully.\n", name)

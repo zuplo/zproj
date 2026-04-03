@@ -50,8 +50,10 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&groupArg, "group", "g", "", "group to operate on (default: the default group)")
-	rootCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color for VS Code workspace (e.g. #1e90ff)")
-	createCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color for VS Code workspace (e.g. #1e90ff)")
+	rootCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color (random if no color specified)")
+	rootCmd.Flags().Lookup("color").NoOptDefVal = "random"
+	createCmd.Flags().StringVarP(&colorArg, "color", "c", "", "title bar color (random if no color specified)")
+	createCmd.Flags().Lookup("color").NoOptDefVal = "random"
 }
 
 func initConfig() {

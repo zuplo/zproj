@@ -3,6 +3,7 @@ package project
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -192,6 +193,12 @@ var ColorMap = map[string]string{
 func ResolveColor(name string) (string, bool) {
 	hex, ok := ColorMap[name]
 	return hex, ok
+}
+
+// RandomColor returns a random color name.
+func RandomColor() string {
+	names := ColorNames()
+	return names[rand.Intn(len(names))]
 }
 
 // ColorNames returns all valid color names sorted.
